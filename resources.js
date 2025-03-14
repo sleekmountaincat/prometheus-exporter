@@ -79,7 +79,8 @@ const memory_array_buffers_gauge = new Prometheus.Gauge({ name: 'memory_array_bu
 
 //logic to create a settings.json file if one does not exist
 if (server.workerIndex == 0) {
-  if (PrometheusExporterSettings.getRecordCount({ exactCount: false }).recordCount === 0) {
+  let getCount = await PrometheusExporterSettings.getRecordCount({ exactCount: false });
+  if (getCount.recordCount === 0) {
     PrometheusExporterSettings.put({ name: "forceAuthorization", value: true }),
     PrometheusExporterSettings.put({ name: "allowedUsers", value: [] }),
     PrometheusExporterSettings.put({ name: "customMetrics", value: [] })
