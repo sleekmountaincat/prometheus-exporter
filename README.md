@@ -53,57 +53,57 @@ Metric access is controlled by three settings that can be configured using the [
   * `true` or `false`. If true, you must authenticate with HarperDB in order to access the metrics endpoint `/prometheus_exporter/metrics`
 2. `authorizedUsers`
    * Array of Username (HarperDB users) strings. Only used if `forceAuthorization` is `true`. If empty, the user used to authenticate must be a `super_user`. If there are any strings in the array, those users will be authorized to access as well as any super users.
-     3. `customMetrics`
-        * Object array of values that define converting Harper custom metric(s) to Prometheus metric(s). The definition is as follows:
-          * `metricAttribute` (required): The Harper metric name that needs to be processed as a custom Prometheus metric.
-          * `help` (required): The help text to be associated with the Prometheus metric.
-          * `labels` (required): Object array of label definitions for the Prometheus metric. The definition for labels:
-            * `label` (required): Name of the Prometheus label.
-            * `metricAttribute` (required): Name of the Harper label that maps to the Prometheus label.
-            * `delimiter` (optional): If the label value is a concatenated string, this defines the delimiter with which to split the data.
-            * `index` (optional / required with delimiter): This is used in conjunction with the delimiter attribute.  This creates the mapping from the split label value, based on delimiter, to the Prometheus label value.  `index` can also be used independently of delimiter if the Harper label value is an array.
+3. `customMetrics`
+   * Object array of values that define converting Harper custom metric(s) to Prometheus metric(s). The definition is as follows:
+     * `metricAttribute` (required): The Harper metric name that needs to be processed as a custom Prometheus metric.
+     * `help` (required): The help text to be associated with the Prometheus metric.
+     * `labels` (required): Object array of label definitions for the Prometheus metric. The definition for labels:
+       * `label` (required): Name of the Prometheus label.
+       * `metricAttribute` (required): Name of the Harper label that maps to the Prometheus label.
+       * `delimiter` (optional): If the label value is a concatenated string, this defines the delimiter with which to split the data.
+       * `index` (optional / required with delimiter): This is used in conjunction with the delimiter attribute.  This creates the mapping from the split label value, based on delimiter, to the Prometheus label value.  `index` can also be used independently of delimiter if the Harper label value is an array.
     
-          Example `customMetrics` value:      
-          ```json
-          {
-             "name": "customMetrics",
-              "value": [
+     Example `customMetrics` value:      
+     ```json
+     {
+        "name": "customMetrics",
+         "value": [
+        {
+           "name": "myCoolMetric",
+           "metricAttribute": "metric",
+           "help": "this is the coolest metric",
+           "labels": [
              {
-                "name": "myCoolMetric",
-                "metricAttribute": "metric",
-                "help": "this is the coolest metric",
-                "labels": [
-                  {
-                     "label": "coolLabel",
-                     "metricAttribute": "path"
-                     "delimiter": "::"
-                     "index": 0
-                  },
-                  {
-                     "label": "coolerLabel",
-                     "metricAttribute": "path"
-                     "delimiter": "::"
-                     "index": 1
-                  },
-                  {
-                     "label": "coolestLabel",
-                     "metricAttribute": "path"
-                     "delimiter": "::"
-                     "index": 2
-                  },
-                  {
-                     "label": "httpMethod",
-                     "metricAttribute": "method"
-                  },
-                  {
-                     "label": "statusCode",
-                     "metricAttribute": "type"
-                  }
-                ]
-            }
-          ]
-     }
-        ```
+                "label": "coolLabel",
+                "metricAttribute": "path"
+                "delimiter": "::"
+                "index": 0
+             },
+             {
+                "label": "coolerLabel",
+                "metricAttribute": "path"
+                "delimiter": "::"
+                "index": 1
+             },
+             {
+                "label": "coolestLabel",
+                "metricAttribute": "path"
+                "delimiter": "::"
+                "index": 2
+             },
+             {
+                "label": "httpMethod",
+                "metricAttribute": "method"
+             },
+             {
+                "label": "statusCode",
+                "metricAttribute": "type"
+             }
+           ]
+       }
+     ]
+   }
+      ```
 
 
 ### Example REST commands
