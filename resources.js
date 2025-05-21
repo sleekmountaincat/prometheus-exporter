@@ -479,6 +479,14 @@ async function generateMetricsFromAnalytics(notFast) {
 // Call set() function on any gauge object with a default value of 0
 const gaugeSet = (gauge, options, value) => gauge?.set(options, value || 0);
 
+/**
+ * Processes custom metrics and appends formatted output to the provided output array.
+ *
+ * @param {Array} customMetrics - An array of custom metric objects, each containing metadata such as metric attributes, names, and help descriptions.
+ * @param {Object} metric - An object containing metric data such as quantiles, mean, and count for the corresponding custom metrics.
+ * @param {Array} output - An array to which the formatted metric data will be appended.
+ * @return {void} No return value. The function modifies the `output` array directly by appending formatted metric strings.
+ */
 async function outputCustomMetrics(customMetrics, metric, output) {
   customMetrics.forEach(custom_metric => {
     if (metric[custom_metric.get('metricAttribute')] === custom_metric.get('name')) {
@@ -502,13 +510,44 @@ async function outputCustomMetrics(customMetrics, metric, output) {
   });
 }
 
-function buildCustomLabels(custom_metric, metric) {
-  let labels = [];
-  custom_metric.get('labels').forEach(label => {
-    labels.push(`${label.label}="${metric[label.metricAttribute]}"`);
+/**
+ * Builds a formatted string of metric labels for Prometheus output.
+ * @param {Object} customMetric - Custom metric definition containing labels configuration
+ * @param {Object} metric - Metric data containing values for the labels
+ * @returns {string} Formatted label string in Prometheus format
+ */
+function buildCustomLabels(customMetric, metric) {
+  const labels = [];
+
+  customMetric.get('labels').forEach(label => {
+    const labelValue = extractLabelValue(metric[label.metricAttribute], label);
+    labels.push(`${label.label}="${labelValue}"`);
   });
+
   return labels.join(',');
 }
+
+
+/**
+ * Extracts the appropriate value from a metric attribute based on label configuration.
+ * @param {any} value - The raw value for the metric label
+ * @param {Object} labelConfig - Configuration for the label including delimiter and index
+ * @returns {any} The extracted value
+ */
+function extractLabelValue(value, labelConfig) {
+  const { delimiter, index } = labelConfig;
+  const parsedIndex = parseInt(index);
+  const isValidIndex = !isNaN(parsedIndex) && parsedIndex >= 0;
+
+  if (delimiter && isValidIndex) {
+    return value.split(delimiter)[parsedIndex];
+  } else if (Array.isArray(value) && isValidIndex) {
+    return value[parsedIndex];
+  }
+
+  return value;
+}
+
 
 export const prometheus_exporter = {
   metrics,
