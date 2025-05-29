@@ -19,16 +19,16 @@ contentTypes.set('application/openmetrics-text', {
   q: 1,
 });
 
-const puts_gauge = new Prometheus.Gauge({ name: 'harperdb_table_puts_total', help: 'Total number of non-delete writes by table', labelNames: ['database', 'table'] });
-const deletes_gauge = new Prometheus.Gauge({ name: 'harperdb_table_deletes_total', help: 'Total number of deletes by table', labelNames: ['database', 'table'] });
-const txns_gauge = new Prometheus.Gauge({ name: 'harperdb_table_txns_total', help: 'Total number of transactions by table', labelNames: ['database', 'table'] });
-const page_flushes_gauge = new Prometheus.Gauge({ name: 'harperdb_table_page_flushes_total', help: 'Total number of times all pages are flushed by table', labelNames: ['database', 'table'] });
-const writes_gauge = new Prometheus.Gauge({ name: 'harperdb_table_writes_total', help: 'Total number of disk write operations by table', labelNames: ['database', 'table'] });
-const pages_written_gauge = new Prometheus.Gauge({ name: 'harperdb_table_pages_written_total', help: 'Total number of pages written to disk by table. This is higher than writes because sequential pages can be written in a single write operation.', labelNames: ['database', 'table'] });
-const time_during_txns_gauge = new Prometheus.Gauge({ name: 'harperdb_table_time_during_txns_total', help: 'Total time from when transaction was started (lock acquired) until finished and all writes have been made (but not necessarily flushed/synced to disk) by table', labelNames: ['database', 'table'] });
-const time_start_txns_gauge = new Prometheus.Gauge({ name: 'harperdb_table_time_start_txns_total', help: 'Total time spent waiting for transaction lock acquisition by table', labelNames: ['database', 'table'] });
-const time_page_flushes_gauge = new Prometheus.Gauge({ name: 'harperdb_table_time_page_flushes_total', help: 'Total time spent on write calls by table', labelNames: ['database', 'table'] });
-const time_sync_gauge = new Prometheus.Gauge({ name: 'harperdb_table_time_sync_total', help: 'Total time spent waiting for writes to sync/flush to disk by table', labelNames: ['database', 'table'] });
+const db_puts_gauge = new Prometheus.Gauge({ name: 'harperdb_database_puts_total', help: 'Total number of non-delete writes by database', labelNames: ['database'] });
+const db_deletes_gauge = new Prometheus.Gauge({ name: 'harperdb_database_deletes_total', help: 'Total number of deletes by database', labelNames: ['database'] });
+const db_txns_gauge = new Prometheus.Gauge({ name: 'harperdb_database_txns_total', help: 'Total number of transactions by database', labelNames: ['database'] });
+const db_page_flushes_gauge = new Prometheus.Gauge({ name: 'harperdb_database_page_flushes_total', help: 'Total number of times all pages are flushed by database', labelNames: ['database'] });
+const db_writes_gauge = new Prometheus.Gauge({ name: 'harperdb_database_writes_total', help: 'Total number of disk write operations by database', labelNames: ['database'] });
+const db_pages_written_gauge = new Prometheus.Gauge({ name: 'harperdb_database_pages_written_total', help: 'Total number of pages written to disk by database. This is higher than writes because sequential pages can be written in a single write operation.', labelNames: ['database'] });
+const db_time_during_txns_gauge = new Prometheus.Gauge({ name: 'harperdb_database_time_during_txns_total', help: 'Total time from when transaction was started (lock acquired) until finished and all writes have been made (but not necessarily flushed/synced to disk) by database', labelNames: ['database'] });
+const db_time_start_txns_gauge = new Prometheus.Gauge({ name: 'harperdb_database_time_start_txns_total', help: 'Total time spent waiting for transaction lock acquisition by database', labelNames: ['database'] });
+const db_time_page_flushes_gauge = new Prometheus.Gauge({ name: 'harperdb_database_time_page_flushes_total', help: 'Total time spent on write calls by database', labelNames: ['database'] });
+const db_time_sync_gauge = new Prometheus.Gauge({ name: 'harperdb_database_time_sync_total', help: 'Total time spent waiting for writes to sync/flush to disk by database', labelNames: ['database'] });
 
 const thread_count_gauge = new Prometheus.Gauge({ name: 'harperdb_process_threads_count', help: 'Number of threads in the HarperDB core process' });
 const harperdb_cpu_percentage_gauge = new Prometheus.Gauge({ name: 'harperdb_process_cpu_utilization', help: 'CPU utilization of a HarperDB process', labelNames: ['process_name'] });
@@ -151,16 +151,16 @@ class metrics extends Resource {
     // optional 'fast' param is used to return metrics faster and skip metrics less important.
     let notFast = this?.getId() !== 'fast';
     //reset the gauges, this is due to the values staying "stuck" if there is no system info metric value for the prometheus metric.  If our system info has no metrics we then need the metric to be zero.
-    puts_gauge.reset();
-    deletes_gauge.reset();
-    txns_gauge.reset();
-    page_flushes_gauge.reset();
-    writes_gauge.reset();
-    pages_written_gauge.reset();
-    time_during_txns_gauge.reset();
-    time_start_txns_gauge.reset();
-    time_page_flushes_gauge.reset();
-    time_sync_gauge.reset();
+    db_puts_gauge.reset();
+    db_deletes_gauge.reset();
+    db_txns_gauge.reset();
+    db_page_flushes_gauge.reset();
+    db_writes_gauge.reset();
+    db_pages_written_gauge.reset();
+    db_time_during_txns_gauge.reset();
+    db_time_start_txns_gauge.reset();
+    db_time_page_flushes_gauge.reset();
+    db_time_sync_gauge.reset();
     thread_count_gauge.reset();
     harperdb_cpu_percentage_gauge.reset();
 
@@ -309,20 +309,18 @@ class metrics extends Resource {
     }
 
     if(system_info?.metrics) {
-      for (const [database_name, table_object] of Object.entries(system_info?.metrics)) {
-        for (const [table_name, table_metrics] of Object.entries(table_object)) {
-          const labels = { database: database_name, table: table_name };
-          gaugeSet(puts_gauge, labels, table_metrics?.puts);
-          gaugeSet(deletes_gauge, labels, table_metrics?.deletes);
-          gaugeSet(txns_gauge, labels, table_metrics?.txns);
-          gaugeSet(page_flushes_gauge, labels, table_metrics?.pageFlushes);
-          gaugeSet(writes_gauge, labels, table_metrics?.writes);
-          gaugeSet(pages_written_gauge, labels, table_metrics?.pagesWritten);
-          gaugeSet(time_during_txns_gauge, labels, table_metrics?.timeDuringTxns);
-          gaugeSet(time_start_txns_gauge, labels, table_metrics?.timeStartTxns);
-          gaugeSet(time_page_flushes_gauge, labels, table_metrics?.timePageFlushes);
-          gaugeSet(time_sync_gauge, labels, table_metrics?.timeSync);
-        }
+      for (const [database_name, database_metrics] of Object.entries(system_info?.metrics)) {
+          const db_labels = { database: database_name };
+          gaugeSet(db_puts_gauge, db_labels, database_metrics?.puts);
+          gaugeSet(db_deletes_gauge, db_labels, database_metrics?.deletes);
+          gaugeSet(db_txns_gauge, db_labels, database_metrics?.txns);
+          gaugeSet(db_page_flushes_gauge, db_labels, database_metrics?.pageFlushes);
+          gaugeSet(db_writes_gauge, db_labels, database_metrics?.writes);
+          gaugeSet(db_pages_written_gauge, db_labels, database_metrics?.pagesWritten);
+          gaugeSet(db_time_during_txns_gauge, db_labels, database_metrics?.timeDuringTxns);
+          gaugeSet(db_time_start_txns_gauge, db_labels, database_metrics?.timeStartTxns);
+          gaugeSet(db_time_page_flushes_gauge, db_labels, database_metrics?.timePageFlushes);
+          gaugeSet(db_time_sync_gauge, db_labels, database_metrics?.timeSync);
       }
     }
 
